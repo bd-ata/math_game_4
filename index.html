@@ -1,1 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>擴分與約分配對遊戲</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+        }
 
+        h1 {
+            background-color: #4CAF50;
+            color: white;
+            padding: 20px 0;
+            margin: 0;
+        }
+
+        #progress {
+            font-size: 20px;
+            margin: 10px 0;
+        }
+
+        #target-fraction {
+            font-size: 24px;
+            margin: 10px 0;
+        }
+
+        #options {
+            width: 80%;
+            margin: 0 auto;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .option {
+            width: 100px;
+            height: 50px;
+            background-color: #fff;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            cursor: pointer;
+            border-radius: 10px;
+            user-select: none;
+            border: 2px solid #4CAF50;
+            margin: 10px;
+            transition: background-color 0.2s, transform 0.2s;
+        }
+
+        .option:hover {
+            transform: scale(1.05);
+            background-color: #e8f5e9;
+        }
+
+        .correct {
+            background-color: #A5D6A7;
+            cursor: default;
+        }
+
+        .incorrect {
+            background-color: #E57373;
+            cursor: default;
+        }
+
+        #score {
+            font-size: 20px;
+            margin: 10px 0;
+        }
+
+        #next-button {
+            padding: 10px 20px;
+            font-size: 18px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            display: none;
+            margin: 20px auto;
+        }
+
+        #next-button:hover {
+            background-color: #45A049;
+        }
+    </style>
+</head>
+<body>
+
+<h1>擴分與約分配對遊戲</h1>
+<div id="progress">目前已挑戰第 <span id="current-question">1</span> / 10 題</div>
+<div id="target-fraction">請找出等值分數</div>
+<div id="options"></div>
+<div id="score">正確配對：<span id="correct-count">0</span> | 錯誤配對：<span id="incorrect-count">0</span></div>
+<button id="next-button" onclick="nextQuestion()">下一題</button>
+
+<!-- 音效檔案 -->
+<audio id="correct-sound" src="correct.mp3"></audio>
+<audio id="wrong-sound" src="wrong.mp3"></audio>
+
+<script>
+    const progressElement = document.getElementById('current-question');
+    const optionsContainer = document.getElementById('options');
+    const correctCountElement = document.getElementById('correct-count');
+    const incorrectCountElement = document.getElementById('incorrect-count');
+    const nextButton = document.getElementById('next-button');
+
+    let currentQuestion = 1;
+    const totalQuestions = 10;
+    let correctCount = 0;
+    let incorrectCount = 0;
+    let targetFraction;
+    let correctPairs = [];
+
+    const fractions = [
+        { numerator: 1, denominator: 2 },
+        { numerator: 2, denominator: 3 },
+        { numerator: 3, denominator: 4 },
+        { numerator: 4, denominator: 5 },
+        { numerator: 5, denominator: 6 }
+    ];
+
+    function startGame() {
+        resetGame();
+        nextQuestion();
+    }
+
+    function resetGame() {
+        correctCount = 0;
+        incorrectCount = 0;
+        currentQuestion = 1;
+        correctCountElement.textContent = correctCount;
+        incorrectCountElement.textContent = incorrectCount;
+        nextButton.style.display = 'none';
+    }
+
+    function nextQuestion() {
+        if (currentQuestion <= totalQuestions) {
+            generateQuestion();
+            displayOptions();
+            progressElement.textContent = currentQuestion;
+            currentQuestion++;
+        } else {
+            alert(`遊戲結束！你完成了 ${correctCount} 次正確配對。`);
+        }
+    }
+
+    function generateQuestion() {
+        const randomIndex = Math.floor(Math.random() * fractions.length);
+        targetFraction = fractions[randomIndex];
+        correctPairs = generateEquivalentFractions(targetFraction);
+        nextButton.style.display = 'none';
+    }
+
+    function generateEquivalentFractions(fraction) {
+        const { numerator, denominator } = fraction;
+        return [
+            { numerator: numerator * 2, denominator: denominator * 2 },
+            { numerator: numerator * 3, denominator: denominator * 3 }
+        ];
+    }
+
+    function displayOptions() {
+        optionsContainer.innerHTML = '';
+        const options = [...correctPairs, ...generateIncorrectFractions()];
+        shuffle(options);
+
+        options.forEach(fraction => {
+            const optionDiv = document.createElement('div');
+            optionDiv.classList.add('option');
+            optionDiv.textContent = `${fraction.numerator}/${fraction.denominator}`;
+            optionDiv.dataset.value = JSON.stringify(fraction);
+            optionDiv.addEventListener('click', () => selectOption(optionDiv));
+            optionsContainer.appendChild(optionDiv);
+        });
+    }
+
+    function generateIncorrectFractions() {
+        const incorrectFractions = [];
+        while (incorrectFractions.length < 4) {
+            const num = Math.floor(Math.random() * 10) + 1;
+            const denom = Math.floor(Math.random() * 10) + 1;
+            if (num / denom !== targetFraction.numerator / targetFraction.denominator) {
+                incorrectFractions.push({ numerator: num, denominator: denom });
+            }
+        }
+        return incorrectFractions;
+    }
+
+    function shuffle(array) {
+        array.sort(() => Math.random() - 0.5);
+    }
+
+    function selectOption(element) {
+        const selectedFraction = JSON.parse(element.dataset.value);
+        if (
+            selectedFraction.numerator / selectedFraction.denominator ===
+            targetFraction.numerator / targetFraction.denominator
+        ) {
+            element.classList.add('correct');
+            correctCount++;
+            correctCountElement.textContent = correctCount;
+            checkAllMatched();
+        } else {
+            element.classList.add('incorrect');
+            incorrectCount++;
+            incorrectCountElement.textContent = incorrectCount;
+            playSound('wrong');
+        }
+    }
+
+    function checkAllMatched() {
+        const matchedCards = document.querySelectorAll('.correct');
+        if (matchedCards.length === correctPairs.length) {
+            nextButton.style.display = 'block';
+        }
+    }
+
+    function playSound(type) {
+        const sound = document.getElementById(`${type}-sound`);
+        sound.currentTime = 0;
+        sound.play();
+    }
+
+    startGame();
+</script>
+
+</body>
+</html>
