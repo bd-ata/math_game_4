@@ -37,15 +37,35 @@
             justify-content: center;
         }
 
+        .fraction {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .fraction .numerator {
+            border-bottom: 1px solid black;
+            padding-bottom: 5px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .fraction .denominator {
+            padding-top: 5px;
+            width: 100%;
+            text-align: center;
+        }
+
         .option {
             width: 80px;
-            height: 50px;
+            height: 80px;
             background-color: #fff;
             color: #333;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 24px;
             cursor: pointer;
             border-radius: 10px;
             user-select: none;
@@ -95,7 +115,8 @@
 
 <h1>擴分與約分配對遊戲</h1>
 <div id="progress">目前已挑戰第 <span id="current-question">1</span> / 10 題</div>
-<div id="target-fraction">請找出與 <strong id="fraction-display"></strong> 等值的分數</div>
+<div id="target-fraction">請找出與下列分數等值的分數：</div>
+<div id="fraction-display" class="fraction"></div>
 <div id="options"></div>
 <div id="score">正確配對：<span id="correct-count">0</span> | 錯誤配對：<span id="incorrect-count">0</span></div>
 <button id="next-button" onclick="nextQuestion()">下一題</button>
@@ -118,14 +139,6 @@
     let incorrectCount = 0;
     let targetFraction;
     let correctPairs = [];
-
-    const fractions = [
-        { numerator: 1, denominator: 2 },
-        { numerator: 2, denominator: 3 },
-        { numerator: 3, denominator: 4 },
-        { numerator: 4, denominator: 5 },
-        { numerator: 5, denominator: 6 }
-    ];
 
     function startGame() {
         resetGame();
@@ -153,9 +166,10 @@
     }
 
     function generateQuestion() {
-        const randomIndex = Math.floor(Math.random() * fractions.length);
-        targetFraction = fractions[randomIndex];
-        fractionDisplay.textContent = `${targetFraction.numerator}/${targetFraction.denominator}`;
+        const numerator = Math.floor(Math.random() * 9) + 1;
+        const denominator = Math.floor(Math.random() * 9) + numerator + 1;
+        targetFraction = { numerator, denominator };
+        displayFraction(targetFraction, fractionDisplay);
         correctPairs = generateEquivalentFractions(targetFraction);
         nextButton.style.display = 'none';
     }
@@ -168,6 +182,13 @@
         ];
     }
 
+    function displayFraction(fraction, element) {
+        element.innerHTML = `
+            <div class="numerator">${fraction.numerator}</div>
+            <div class="denominator">${fraction.denominator}</div>
+        `;
+    }
+
     function displayOptions() {
         optionsContainer.innerHTML = '';
         const options = [...correctPairs, ...generateIncorrectFractions()];
@@ -176,7 +197,12 @@
         options.forEach(fraction => {
             const optionDiv = document.createElement('div');
             optionDiv.classList.add('option');
-            optionDiv.textContent = `${fraction.numerator}/${fraction.denominator}`;
+            optionDiv.innerHTML = `
+                <div class="fraction">
+                    <div class="numerator">${fraction.numerator}</div>
+                    <div class="denominator">${fraction.denominator}</div>
+                </div>
+            `;
             optionDiv.dataset.value = JSON.stringify(fraction);
             optionDiv.addEventListener('click', () => selectOption(optionDiv));
             optionsContainer.appendChild(optionDiv);
