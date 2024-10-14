@@ -139,6 +139,7 @@
     let incorrectCount = 0;
     let targetFraction;
     let correctPairs = [];
+    let mode; // 用來決定是擴分或約分題目
 
     function startGame() {
         resetGame();
@@ -156,6 +157,7 @@
 
     function nextQuestion() {
         if (currentQuestion <= totalQuestions) {
+            mode = Math.random() < 0.5 ? 'expand' : 'reduce'; // 隨機選擇擴分或約分
             generateQuestion();
             displayOptions();
             progressElement.textContent = currentQuestion;
@@ -170,15 +172,18 @@
         const denominator = Math.floor(Math.random() * 9) + numerator + 1;
         targetFraction = { numerator, denominator };
         displayFraction(targetFraction, fractionDisplay);
-        correctPairs = generateEquivalentFractions(targetFraction);
+
+        correctPairs = mode === 'expand' 
+            ? generateEquivalentFractions(targetFraction, 2) 
+            : generateEquivalentFractions(targetFraction, 1 / 2);
+        
         nextButton.style.display = 'none';
     }
 
-    function generateEquivalentFractions(fraction) {
+    function generateEquivalentFractions(fraction, factor) {
         const { numerator, denominator } = fraction;
         return [
-            { numerator: numerator * 2, denominator: denominator * 2 },
-            { numerator: numerator * 3, denominator: denominator * 3 }
+            { numerator: Math.floor(numerator * factor), denominator: Math.floor(denominator * factor) }
         ];
     }
 
